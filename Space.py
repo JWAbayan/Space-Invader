@@ -1,5 +1,6 @@
+import random
 import pygame
-import math
+import sys
 
 
 class Player:
@@ -20,6 +21,31 @@ class Player:
 
     def move_vert(self):
         self.playerY += self.pos_change_x
+
+
+class Enemy:
+    def __init__(self) -> None:
+        self.image = pygame.image.load("assets/meteor.png")
+        self.enemyX = 0
+        self.enemyY = 0
+        self.velocity = 0.5
+
+        # States: ready,falling, hit
+        self.state = "ready"
+
+    def move_vert(self):
+        self.enemyY += self.velocity
+
+    # Getters and setters
+
+    def get_EnemyX(self):
+        return self.enemyX
+
+    def get_EnemyY(self):
+        return self.enemyY
+
+    def set_pos_change_x(self, val):
+        self.set_pos_change_x = val
 
 
 class Bullet:
@@ -60,10 +86,13 @@ class Game:
     def __init__(self, screenWidth, screenHeight):
         # Initialize pygame modules
         pygame.init()
-
+        self.running = True
+        self.clock = pygame.time.Clock()
+        self.start_ticks = pygame.time.get_ticks()
+        self.screenWidth = screenWidth
+        self.screenHeight = screenHeight
         self.set_window(screenWidth, screenHeight)
         self.set_assets()
-        self.running = True
 
     def on_run(self):
         # Game Loop
@@ -76,6 +105,7 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                sys.exit()
 
             # Player move set
             if event.type == pygame.KEYDOWN:
@@ -97,11 +127,22 @@ class Game:
 
         for bullet in self.bullets:
             if bullet.state == "fired":
+                # remove out of bounds bullet
                 if bullet.get_y() < 0:
                     self.bullets.remove(bullet)
+
                 bullet.move_vert()
                 self.draw_bullet(bullet)
-               #print(f"Y-COOR: {bullet.get_y()}")
+
+            elif bullet.state == "hit":
+                # The bullet and the enemy should be removed from the screen
+                pass
+
+        if self.enemy.state == "falling":
+            self.enemy.move_vert()
+            self.draw_enemy()
+
+        self.spawn_enemy()
         self.player.move_hori()
         self.draw_player()
 
@@ -117,6 +158,18 @@ class Game:
         y = bullet.get_y()
 
         self.screen.blit(bullet.image, (x, y))
+
+    def draw_enemy(self):
+        # random_loc_x = random.randint(30, self.screenWidth-30)
+        y = self.enemy.get_EnemyY()
+        self.screen.blit(self.enemy.image, (355, y))
+
+    def spawn_enemy(self):
+        spawn_interval = (pygame.time.get_ticks() - self.start_ticks)/1000
+
+        if spawn_interval > 5:
+            self.enemy.state = "falling"
+            self.start_ticks = pygame.time.get_ticks()
 
     def fire_bullet(self):
         bullet = Bullet()
@@ -138,6 +191,7 @@ class Game:
 
     def set_assets(self):
         self.player = Player()
+        self.enemy = Enemy()
         # Array of bullets
         self.bullets = []
         self.bulletCount = 0
