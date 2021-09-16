@@ -24,10 +24,10 @@ class Player:
 
 
 class Enemy:
-    def __init__(self) -> None:
+    def __init__(self, x, y) -> None:
         self.image = pygame.image.load("assets/meteor.png")
-        self.enemyX = 0
-        self.enemyY = 0
+        self.enemyX = x
+        self.enemyY = y
         self.velocity = 0.5
 
         # States: ready,falling, hit
@@ -51,7 +51,7 @@ class Enemy:
 class Bullet:
     def __init__(self):
         self.image = pygame.image.load("assets/bullet.png")
-        self.velocity = 0.5
+        self.velocity = random.randrange(0, 1, 0.2)
         self.bulletX = 0
         self.bulletY = 0
         # States: ready, fired, hit
@@ -138,9 +138,13 @@ class Game:
                 # The bullet and the enemy should be removed from the screen
                 pass
 
-        if self.enemy.state == "falling":
-            self.enemy.move_vert()
-            self.draw_enemy()
+        for enemy in self.enemies:
+            if enemy.state == "falling":
+                enemy.move_vert()
+                self.draw_enemy(enemy)
+            elif enemy == "hit":
+                pass
+                # Game over
 
         self.spawn_enemy()
         self.player.move_hori()
@@ -159,16 +163,20 @@ class Game:
 
         self.screen.blit(bullet.image, (x, y))
 
-    def draw_enemy(self):
-        # random_loc_x = random.randint(30, self.screenWidth-30)
-        y = self.enemy.get_EnemyY()
-        self.screen.blit(self.enemy.image, (355, y))
+    def draw_enemy(self, enemy):
+        x = enemy.get_EnemyX()
+        y = enemy.get_EnemyY()
+        self.screen.blit(enemy.image, (x, y))
 
     def spawn_enemy(self):
         spawn_interval = (pygame.time.get_ticks() - self.start_ticks)/1000
+        if spawn_interval > 2:
+            random_loc_x = random.randint(30, self.screenWidth-30)
+            enemy = Enemy(random_loc_x, 0)
+            enemy.state = "falling"
+            self.enemies.append(enemy)
 
-        if spawn_interval > 5:
-            self.enemy.state = "falling"
+            # resets the timer
             self.start_ticks = pygame.time.get_ticks()
 
     def fire_bullet(self):
@@ -191,7 +199,7 @@ class Game:
 
     def set_assets(self):
         self.player = Player()
-        self.enemy = Enemy()
+        self.enemies = []
         # Array of bullets
         self.bullets = []
         self.bulletCount = 0
