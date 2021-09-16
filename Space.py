@@ -8,7 +8,6 @@ class Player:
         self.playerX = 370
         self.playerY = 480
         self.pos_change_x = 0
-        self.bullet = Bullet(self.playerX, self.playerY)
 
     def get_PlayerX(self):
         return self.playerX
@@ -24,11 +23,11 @@ class Player:
 
 
 class Bullet:
-    def __init__(self, x, y):
+    def __init__(self):
         self.image = pygame.image.load("assets/bullet.png")
-        self.velocity = 0.2
-        self.bulletX = x
-        self.bulletY = y
+        self.velocity = 0.5
+        self.bulletX = 0
+        self.bulletY = 0
         # States: ready, fired, hit
         self.state = "ready"
 
@@ -78,7 +77,7 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
 
-            # Player movement
+            # Player move set
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     self.player.pos_change_x = 0.2
@@ -87,11 +86,7 @@ class Game:
                     self.player.pos_change_x = -0.2
 
                 if event.key == pygame.K_SPACE:
-                    self.player.bullet.set_state("fired")
-                    x = self.player.get_PlayerX() + 25
-                    y = self.player.get_PlayerY() - 10
-                    self.player.bullet.set_x(x)
-                    self.player.bullet.set_y(y)
+                    self.fire_bullet()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -100,10 +95,13 @@ class Game:
     def on_render(self):
         self.screen.fill((0, 0, 0))
 
-        if self.player.bullet.state == "fired":
-            self.player.bullet.move_vert()
-            self.draw_bullet()
-
+        for bullet in self.bullets:
+            if bullet.state == "fired":
+                if bullet.get_y() < 0:
+                    self.bullets.remove(bullet)
+                bullet.move_vert()
+                self.draw_bullet(bullet)
+               #print(f"Y-COOR: {bullet.get_y()}")
         self.player.move_hori()
         self.draw_player()
 
@@ -114,12 +112,21 @@ class Game:
 
         self.screen.blit(player_image, (x, y))
 
-    def draw_bullet(self):
-        bullet_image = self.player.bullet.image
-        x = self.player.bullet.get_x()
-        y = self.player.bullet.get_y()
+    def draw_bullet(self, bullet):
+        x = bullet.get_x()
+        y = bullet.get_y()
 
-        self.screen.blit(bullet_image, (x, y))
+        self.screen.blit(bullet.image, (x, y))
+
+    def fire_bullet(self):
+        bullet = Bullet()
+        bullet.set_state("fired")
+        x = self.player.get_PlayerX() + 25
+        y = self.player.get_PlayerY() - 10
+        bullet.set_x(x)
+        bullet.set_y(y)
+
+        self.bullets.append(bullet)
 
     def set_window(self, width, height):
         title = "Space Game"
@@ -131,6 +138,9 @@ class Game:
 
     def set_assets(self):
         self.player = Player()
+        # Array of bullets
+        self.bullets = []
+        self.bulletCount = 0
 
 
 if __name__ == "__main__":
