@@ -16,8 +16,13 @@ class Player:
     def get_PlayerY(self):
         return self.playerY
 
-    def move_hori(self):
-        self.playerX += self.pos_change_x
+    def move_hori(self, screenWidth):
+        new_playerX = self.playerX + self.pos_change_x
+
+        # Checks if the new player x is inside the boundary
+        # x > 30 and x < screenwidth - (30 + player image pixel)
+        if new_playerX > 30 and new_playerX < screenWidth - 94:
+            self.playerX += self.pos_change_x
 
     def move_vert(self):
         self.playerY += self.pos_change_x
@@ -147,6 +152,7 @@ class Game:
 
         for enemy in self.enemies:
             if enemy.state == "falling":
+
                 # remove enemy if out of bound
                 if enemy.get_EnemyY() > self.screenHeight:
                     self.enemies.remove(enemy)
@@ -158,7 +164,7 @@ class Game:
                 # Game over
 
         self.spawn_enemy()
-        self.player.move_hori()
+        self.player.move_hori(self.screenWidth)
         self.draw_player()
 
     def draw_player(self):
@@ -181,13 +187,13 @@ class Game:
 
     # Spawns enemy between time intervals
     def spawn_enemy(self):
+
         spawn_interval = (pygame.time.get_ticks() - self.start_ticks)/1000
         if spawn_interval > 1:
             random_loc_x = random.randint(30, self.screenWidth-30)
             enemy = Enemy(random_loc_x, 0)
             enemy.state = "falling"
             self.enemies.append(enemy)
-
             # resets the timer
             self.start_ticks = pygame.time.get_ticks()
 
@@ -201,6 +207,12 @@ class Game:
         bullet.set_y(y)
 
         self.bullets.append(bullet)
+
+    def collision_detection(self):
+        pass
+
+    def check_boundary(self):
+        pass
 
     def set_window(self, width, height):
         title = "Space Game"
