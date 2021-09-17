@@ -199,9 +199,9 @@ class Game:
     # Spawns enemy between time intervals
     def spawn_enemy(self):
 
-        spawn_interval = (pygame.time.get_ticks() - self.start_ticks)/1000
+        spawn_timer = (pygame.time.get_ticks() - self.start_ticks)/1000
 
-        if spawn_interval > 1:
+        if spawn_timer > 1:
             random_loc_x = random.randint(30, self.screenWidth-30)
             enemy = Enemy(random_loc_x, 0)
             enemy.state = "falling"
@@ -228,9 +228,6 @@ class Game:
                     self.bullets.remove(bullet)
                     self.enemies.remove(enemy)
 
-    def check_boundary(self):
-        pass
-
     def set_window(self, width, height):
         title = "Space Game"
         icon = pygame.image.load('assets/spaceship.png')
@@ -242,9 +239,7 @@ class Game:
     def set_assets(self):
         self.player = Player()
         self.enemies = []
-        # Array of bullets
         self.bullets = []
-        self.bulletCount = 0
 
 
 if __name__ == "__main__":
