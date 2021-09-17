@@ -68,7 +68,7 @@ class Bullet:
         self.bulletX = x
         self.bulletY = y
         self.collider = pygame.Rect(0, 0, 8, 8)
-        # States: ready, fired, hit
+        # States: ready, fired
         self.state = "ready"
 
     def move_vert(self):
@@ -103,8 +103,13 @@ class Game:
         pygame.init()
 
         self.running = True
-        self.clock = pygame.time.Clock()
-        self.start_ticks = pygame.time.get_ticks()
+        self.game_clock = pygame.time.Clock()
+        self.game_start_ticks = pygame.time.get_ticks()
+        self.game_score = 0
+
+        self.game_font = pygame.font.Font("assets/cmd_font.ttf", 24)
+        self.score_text = self.game_font.render(
+            str(self.game_score), True, (255, 255, 255), (0, 0, 0))
 
         # Set window and assets
         self.screenWidth = screenWidth
@@ -115,8 +120,11 @@ class Game:
     def on_run(self):
         # Game Loop
         while self.running:
+            # Checks for events
             self.on_event()
+            # Render assets
             self.on_render()
+            # Update the display
             pygame.display.update()
 
     def on_event(self):
@@ -146,10 +154,11 @@ class Game:
 
     def on_render(self):
         self.screen.fill((0, 0, 0))
+        self.screen.blit(self.score_text, (30, 30))
 
         for bullet in self.bullets:
             if bullet.state == "fired":
-                # remove bullet if out of bound
+                # remove bullet if out of bounds
                 if bullet.get_y() < 0:
                     self.bullets.remove(bullet)
 
@@ -160,10 +169,11 @@ class Game:
                 # The bullet and the enemy should be removed from the screen
                 pass
 
+        # Render all spawned enemy
         for enemy in self.enemies:
             if enemy.state == "falling":
 
-                # remove enemy if out of bound
+                # remove enemy if out of bounds
                 if enemy.get_EnemyY() > self.screenHeight:
                     self.enemies.remove(enemy)
 
@@ -199,7 +209,7 @@ class Game:
     # Spawns enemy between time intervals
     def spawn_enemy(self):
 
-        spawn_timer = (pygame.time.get_ticks() - self.start_ticks)/1000
+        spawn_timer = (pygame.time.get_ticks() - self.game_start_ticks)/1000
 
         if spawn_timer > 1:
             random_loc_x = random.randint(30, self.screenWidth-30)
@@ -207,7 +217,7 @@ class Game:
             enemy.state = "falling"
             self.enemies.append(enemy)
             # resets the timer
-            self.start_ticks = pygame.time.get_ticks()
+            self.game_start_ticks = pygame.time.get_ticks()
 
     # Spawn bullet relative to the player's position
     def fire_bullet(self):
@@ -222,11 +232,29 @@ class Game:
         for enemy in self.enemies:
             enemy_collider = enemy.collider
             if self.player.collider.colliderect(enemy_collider):
-                self.running = False
+                self.reset_game()
             for bullet in self.bullets:
                 if bullet.collider.colliderect(enemy_collider):
                     self.bullets.remove(bullet)
                     self.enemies.remove(enemy)
+                    self.update_score(1)
+
+    def update_score(self, val):
+        if val != 0:
+            self.game_score += val
+        else:
+            self.game_score = 0
+
+        self.score_text = self.game_font.render(
+            str(self.game_score), True, (255, 255, 255), (0, 0, 0))
+
+    def reset_game(self):
+        self.game_score = 0
+        self.enemies.clear()
+        self.bullets.clear()
+        self.player.playerX = 370
+        self.player.playerY = 480
+        self.update_score(0)
 
     def set_window(self, width, height):
         title = "Space Game"
