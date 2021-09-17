@@ -38,7 +38,7 @@ class Enemy:
         self.image = pygame.image.load("assets/meteor.png")
         self.enemyX = x
         self.enemyY = y
-        self.velocity = random.uniform(0.1, 0.7)
+        self.velocity = random.uniform(0.1, 0.5)
         self.collider = pygame.Rect(self.enemyX, self.enemyY, 32, 32)
         # States: ready,falling, hit
         self.state = "ready"
@@ -62,16 +62,18 @@ class Enemy:
 
 
 class Bullet:
-    def __init__(self):
+    def __init__(self, x, y):
         self.image = pygame.image.load("assets/bullet.png")
         self.velocity = 0.5
-        self.bulletX = 0
-        self.bulletY = 0
+        self.bulletX = x
+        self.bulletY = y
+        self.collider = pygame.Rect(0, 0, 8, 8)
         # States: ready, fired, hit
         self.state = "ready"
 
     def move_vert(self):
         self.bulletY -= self.velocity
+        self.collider.y = self.bulletY
 
     def get_velocity(self):
         return self.velocity
@@ -209,19 +211,22 @@ class Game:
 
     # Spawn bullet relative to the player's position
     def fire_bullet(self):
-        bullet = Bullet()
-        bullet.set_state("fired")
         x = self.player.get_PlayerX() + 25
         y = self.player.get_PlayerY() - 10
-        bullet.set_x(x)
-        bullet.set_y(y)
-
+        bullet = Bullet(x, y)
+        bullet.set_state("fired")
+        bullet.collider.x = x
         self.bullets.append(bullet)
 
     def collision_detection(self):
         for enemy in self.enemies:
-            if self.player.collider.colliderect(enemy.collider):
+            enemy_collider = enemy.collider
+            if self.player.collider.colliderect(enemy_collider):
                 self.running = False
+            for bullet in self.bullets:
+                if bullet.collider.colliderect(enemy_collider):
+                    self.bullets.remove(bullet)
+                    self.enemies.remove(enemy)
 
     def check_boundary(self):
         pass
