@@ -9,6 +9,7 @@ class Player:
         self.playerX = 370
         self.playerY = 480
         self.pos_change_x = 0
+        self.collider = pygame.Rect(self.playerX, self.playerY, 32, 32)
 
     def get_PlayerX(self):
         return self.playerX
@@ -22,10 +23,14 @@ class Player:
         # Checks if the new player x is inside the boundary
         # x > 30 and x < screenwidth - (30 + player image pixel)
         if new_playerX > 30 and new_playerX < screenWidth - 94:
-            self.playerX += self.pos_change_x
+            self.playerX = new_playerX
+            self.collider.x = new_playerX
 
     def move_vert(self):
         self.playerY += self.pos_change_x
+
+    def in_collision(self):
+        pass
 
 
 class Enemy:
@@ -34,13 +39,13 @@ class Enemy:
         self.enemyX = x
         self.enemyY = y
         self.velocity = random.uniform(0.1, 0.7)
-
+        self.collider = pygame.Rect(self.enemyX, self.enemyY, 32, 32)
         # States: ready,falling, hit
         self.state = "ready"
 
     def move_vert(self):
         self.enemyY += self.velocity
-
+        self.collider.y = self.enemyY
     # Getters and setters
 
     def get_EnemyX(self):
@@ -51,6 +56,9 @@ class Enemy:
 
     def set_pos_change_x(self, val):
         self.set_pos_change_x = val
+
+    def in_collision(self):
+        pass
 
 
 class Bullet:
@@ -165,6 +173,7 @@ class Game:
 
         self.spawn_enemy()
         self.player.move_hori(self.screenWidth)
+        self.collision_detection()
         self.draw_player()
 
     def draw_player(self):
@@ -189,6 +198,7 @@ class Game:
     def spawn_enemy(self):
 
         spawn_interval = (pygame.time.get_ticks() - self.start_ticks)/1000
+
         if spawn_interval > 1:
             random_loc_x = random.randint(30, self.screenWidth-30)
             enemy = Enemy(random_loc_x, 0)
@@ -209,7 +219,9 @@ class Game:
         self.bullets.append(bullet)
 
     def collision_detection(self):
-        pass
+        for enemy in self.enemies:
+            if self.player.collider.colliderect(enemy.collider):
+                self.running = False
 
     def check_boundary(self):
         pass
