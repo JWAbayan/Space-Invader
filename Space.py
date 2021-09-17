@@ -7,6 +7,7 @@ class Player:
         self.image = pygame.image.load("assets/player.png")
         self.playerX = 370
         self.playerY = 480
+        self.score = 0
         self.pos_change_x = 0
 
     def get_PlayerX(self):
@@ -64,6 +65,7 @@ class Game:
         self.set_window(screenWidth, screenHeight)
         self.set_assets()
         self.running = True
+        self.score = 0
 
     def on_run(self):
         # Game Loop
@@ -101,7 +103,7 @@ class Game:
                     self.bullets.remove(bullet)
                 bullet.move_vert()
                 self.draw_bullet(bullet)
-               #print(f"Y-COOR: {bullet.get_y()}")
+               # print(f"Y-COOR: {bullet.get_y()}")
         self.player.move_hori()
         self.draw_player()
 
@@ -118,6 +120,26 @@ class Game:
 
         self.screen.blit(bullet.image, (x, y))
 
+    def draw_enemy(self, enemy):
+        x = enemy.get_EnemyX()
+        y = enemy.get_EnemyY()
+        self.screen.blit(enemy.image, (x, y))
+
+    # Spawns enemy between time intervals
+    def spawn_enemy(self):
+
+        spawn_timer = (pygame.time.get_ticks() - self.start_ticks)/1000
+
+        if spawn_timer > 1:
+            random_loc_x = random.randint(30, self.screenWidth-30)
+            enemy = Enemy(random_loc_x, 0)
+            enemy.state = "falling"
+            self.enemies.append(enemy)
+            # resets the timer
+            self.start_ticks = pygame.time.get_ticks()
+
+    # Spawn bullets relative to the player's position
+
     def fire_bullet(self):
         bullet = Bullet()
         bullet.set_state("fired")
@@ -125,8 +147,18 @@ class Game:
         y = self.player.get_PlayerY() - 10
         bullet.set_x(x)
         bullet.set_y(y)
-
         self.bullets.append(bullet)
+
+    def collision_detection(self):
+        for enemy in self.enemies:
+            enemy_collider = enemy.collider
+            if self.player.collider.colliderect(enemy_collider):
+                self.running = False
+            for bullet in self.bullets:
+                if bullet.collider.colliderect(enemy_collider):
+                    self.bullets.remove(bullet)
+                    self.enemies.remove(enemy)
+                    self.add_score()
 
     def set_window(self, width, height):
         title = "Space Game"
@@ -135,6 +167,9 @@ class Game:
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption(title)
         pygame.display.set_icon(icon)
+
+    def add_score(self):
+        self.score += 1
 
     def set_assets(self):
         self.player = Player()
