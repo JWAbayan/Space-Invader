@@ -1,5 +1,11 @@
 import pygame
 import random
+from enum import auto, Enum
+
+
+class States(Enum):
+    READY = auto()
+    MOVING = auto()
 
 
 class Player:
@@ -10,10 +16,10 @@ class Player:
         self.velocity_x = 0
         self.collider = pygame.Rect(self.playerX, self.playerY, 32, 32)
 
-    def get_PlayerX(self):
+    def get_X(self):
         return self.playerX
 
-    def get_PlayerY(self):
+    def get_Y(self):
         return self.playerY
 
     def move_hori(self, screenWidth, delta_time):
@@ -40,16 +46,16 @@ class Enemy:
         self.velocity = random.uniform(0.1, 0.5)
         self.collider = pygame.Rect(self.enemyX, self.enemyY, 32, 32)
         # States: ready,falling
-        self.state = "ready"
+        self.state = States.READY
 
     def move_vert(self, delta_time):
         self.enemyY += self.velocity * delta_time
         self.collider.y = self.enemyY
 
-    def get_EnemyX(self):
+    def get_X(self):
         return self.enemyX
 
-    def get_EnemyY(self):
+    def get_Y(self):
         return self.enemyY
 
     def in_collision(self):
@@ -64,7 +70,7 @@ class Bullet:
         self.bulletY = y
         self.collider = pygame.Rect(0, 0, 8, 8)
         # States: ready, fired
-        self.state = "ready"
+        self.state = States.READY
 
     def move_vert(self, delta_time):
         self.bulletY -= self.velocity * delta_time
@@ -79,14 +85,14 @@ class Bullet:
     def set_state(self, state):
         self.state = state
 
-    def set_x(self, x):
+    def set_X(self, x):
         self.bulletX = x
 
-    def set_y(self, y):
+    def set_Y(self, y):
         self.bulletY = y
 
-    def get_x(self):
+    def get_X(self):
         return self.bulletX
 
-    def get_y(self):
+    def get_Y(self):
         return self.bulletY

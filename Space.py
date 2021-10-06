@@ -2,9 +2,11 @@ import random
 import pygame
 import sys
 import math
+import enum
+
 
 from pygame.time import get_ticks
-from Entity import Player, Bullet, Enemy
+from Entity import Player, Bullet, Enemy, States
 
 
 class Game:
@@ -75,57 +77,47 @@ class Game:
     def on_render(self):
         self.screen.fill((0, 0, 0))
 
+        # Render bullets
         for bullet in self.bullets:
-            if bullet.state == "fired":
+            if bullet.state == States.MOVING:
+
                 # remove bullet if out of bounds
-                if bullet.get_y() < 0:
+                if bullet.get_Y() < 0:
                     self.bullets.remove(bullet)
 
                 bullet.move_vert(self.game_clock.get_time())
-                self.draw_bullet(bullet)
+                self.draw_entity(bullet)
 
-        # Render all spawned enemy
+        # Render enemies
         for enemy in self.enemies:
-            if enemy.state == "falling":
+            if enemy.state == States.MOVING:
 
                 # remove enemy if out of bounds
-                if enemy.get_EnemyY() > self.screenHeight:
+                if enemy.get_Y() > self.screenHeight:
                     pass
                     self.enemies.remove(enemy)
 
                 enemy.move_vert(self.game_clock.get_time())
-                self.draw_enemy(enemy)
+                self.draw_entity(enemy)
             elif enemy == "hit":
                 pass
                 # Game over
 
         self.spawn_enemy()
         self.player.move_hori(self.screenWidth, self.game_clock.get_time())
-        self.draw_player()
+        self.draw_entity(self.player)
 
         # self.collision_detection()
 
         self.screen.blit(self.score_text, (30, 30))
         self.show_fps()
 
-    def draw_player(self):
-        player_image = self.player.image
-        x = self.player.get_PlayerX()
-        y = self.player.get_PlayerY()
+    def draw_entity(self, entity):
+        entity_image = entity.image
+        x = entity.get_X()
+        y = entity.get_Y()
 
-        self.screen.blit(player_image, (x, y))
-
-    def draw_bullet(self, bullet):
-        x = bullet.get_x()
-        y = bullet.get_y()
-
-        self.screen.blit(bullet.image, (x, y))
-
-    def draw_enemy(self, enemy):
-        x = enemy.get_EnemyX()
-        y = enemy.get_EnemyY()
-
-        self.screen.blit(enemy.image, (x, y))
+        self.screen.blit(entity_image, (x, y))
 
     # Spawns enemy between time intervals
     def spawn_enemy(self):
@@ -136,21 +128,21 @@ class Game:
         #     print("in")
         #     self.spawn_speed = self.spawn_speed - 0.1
 
-        if spawn_timer > 0.1:
+        if spawn_timer > 0.5:
             for i in range(self.spawn_enemy_total):
                 random_loc_x = random.randint(30, self.screenWidth-30)
                 enemy = Enemy(random_loc_x, 0)
-                enemy.state = "falling"
+                enemy.state = States.MOVING
                 self.enemies.append(enemy)
             # resets the timer
             self.game_start_ticks = pygame.time.get_ticks()
 
     # Spawn bullet relative to the player's position
     def fire_bullet(self):
-        x = self.player.get_PlayerX() + 25
-        y = self.player.get_PlayerY() - 10
+        x = self.player.get_X() + 25
+        y = self.player.get_Y() - 10
         bullet = Bullet(x, y)
-        bullet.set_state("fired")
+        bullet.state = States.MOVING
         bullet.collider.x = x
         self.bullets.append(bullet)
 
