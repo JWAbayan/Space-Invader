@@ -1,100 +1,10 @@
 import random
 import pygame
 import sys
+import math
 
-
-class Player:
-    def __init__(self):
-        self.image = pygame.image.load("assets/player.png")
-        self.playerX = 370
-        self.playerY = 480
-        self.pos_change_x = 0
-        self.collider = pygame.Rect(self.playerX, self.playerY, 32, 32)
-
-    def get_PlayerX(self):
-        return self.playerX
-
-    def get_PlayerY(self):
-        return self.playerY
-
-    def move_hori(self, screenWidth):
-        new_playerX = self.playerX + self.pos_change_x
-
-        # Checks if the new player x is inside the boundary
-        # x > 30 and x < screenwidth - (30 + player image pixel)
-        if new_playerX > 30 and new_playerX < screenWidth - 94:
-            self.playerX = new_playerX
-            self.collider.x = new_playerX
-
-    def move_vert(self):
-        self.playerY += self.pos_change_x
-
-    def in_collision(self):
-        pass
-
-
-class Enemy:
-    def __init__(self, x, y) -> None:
-        self.image = pygame.image.load("assets/meteor.png")
-        self.enemyX = x
-        self.enemyY = y
-        self.velocity = random.uniform(0.1, 0.5)
-        self.collider = pygame.Rect(self.enemyX, self.enemyY, 32, 32)
-        # States: ready,falling, hit
-        self.state = "ready"
-
-    def move_vert(self):
-        self.enemyY += self.velocity
-        self.collider.y = self.enemyY
-    # Getters and setters
-
-    def get_EnemyX(self):
-        return self.enemyX
-
-    def get_EnemyY(self):
-        return self.enemyY
-
-    def set_pos_change_x(self, val):
-        self.set_pos_change_x = val
-
-    def in_collision(self):
-        pass
-
-
-class Bullet:
-    def __init__(self, x, y):
-        self.image = pygame.image.load("assets/bullet.png")
-        self.velocity = 0.5
-        self.bulletX = x
-        self.bulletY = y
-        self.collider = pygame.Rect(0, 0, 8, 8)
-        # States: ready, fired
-        self.state = "ready"
-
-    def move_vert(self):
-        self.bulletY -= self.velocity
-        self.collider.y = self.bulletY
-
-    def get_velocity(self):
-        return self.velocity
-
-    def get_state(self):
-        return self.state
-
-    def set_state(self, state):
-        self.state = state
-
-    def set_x(self, x):
-        self.bulletX = x
-
-    def set_y(self, y):
-        self.bulletY = y
-
-    def get_x(self):
-        return self.bulletX
-
-    def get_y(self):
-        return self.bulletY
+from pygame.time import get_ticks
+from Entity import Player, Bullet, Enemy
 
 
 class Game:
@@ -106,16 +16,26 @@ class Game:
         self.game_clock = pygame.time.Clock()
         self.game_start_ticks = pygame.time.get_ticks()
         self.game_score = 0
-
-        self.game_font = pygame.font.Font("assets/cmd_font.ttf", 24)
-        self.score_text = self.game_font.render(
-            str(self.game_score), True, (255, 255, 255), (0, 0, 0))
+        self.game_level = 1
+        self.spawn_speed = 1
+        self.spawn_enemy_total = 1
+        self.game_fps = 60
 
         # Set window and assets
         self.screenWidth = screenWidth
         self.screenHeight = screenHeight
         self.set_window(screenWidth, screenHeight)
         self.set_assets()
+
+    def set_assets(self):
+        self.player = Player()
+        self.enemies = []
+        self.bullets = []
+        self.game_font = pygame.font.Font("assets/cmd_font.ttf", 24)
+        self.score_text = self.game_font.render(
+            str(self.game_score), True, (255, 255, 255), (0, 0, 0))
+        self.game_fps = self.game_font.render(
+            str(self.game_clock.get_fps()), True, (255, 255, 255), (0, 0, 0))
 
     def on_run(self):
         # Game Loop
@@ -138,11 +58,11 @@ class Game:
 
                 # RIGHT MOVEMENT
                 if event.key == pygame.K_RIGHT:
-                    self.player.pos_change_x = 0.2
+                    self.player.velocity_x = 0.4
 
                 # LEFT MOVEMENT
                 if event.key == pygame.K_LEFT:
-                    self.player.pos_change_x = -0.2
+                    self.player.velocity_x = -0.4
 
                 # FIRE
                 if event.key == pygame.K_SPACE:
@@ -150,11 +70,10 @@ class Game:
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                    self.player.pos_change_x = 0
+                    self.player.velocity_x = 0
 
     def on_render(self):
         self.screen.fill((0, 0, 0))
-        self.screen.blit(self.score_text, (30, 30))
 
         for bullet in self.bullets:
             if bullet.state == "fired":
@@ -162,12 +81,8 @@ class Game:
                 if bullet.get_y() < 0:
                     self.bullets.remove(bullet)
 
-                bullet.move_vert()
+                bullet.move_vert(self.game_clock.get_time())
                 self.draw_bullet(bullet)
-
-            elif bullet.state == "hit":
-                # The bullet and the enemy should be removed from the screen
-                pass
 
         # Render all spawned enemy
         for enemy in self.enemies:
@@ -175,18 +90,23 @@ class Game:
 
                 # remove enemy if out of bounds
                 if enemy.get_EnemyY() > self.screenHeight:
+                    pass
                     self.enemies.remove(enemy)
 
-                enemy.move_vert()
+                enemy.move_vert(self.game_clock.get_time())
                 self.draw_enemy(enemy)
             elif enemy == "hit":
                 pass
                 # Game over
 
         self.spawn_enemy()
-        self.player.move_hori(self.screenWidth)
-        self.collision_detection()
+        self.player.move_hori(self.screenWidth, self.game_clock.get_time())
         self.draw_player()
+
+        # self.collision_detection()
+
+        self.screen.blit(self.score_text, (30, 30))
+        self.show_fps()
 
     def draw_player(self):
         player_image = self.player.image
@@ -204,18 +124,24 @@ class Game:
     def draw_enemy(self, enemy):
         x = enemy.get_EnemyX()
         y = enemy.get_EnemyY()
+
         self.screen.blit(enemy.image, (x, y))
 
     # Spawns enemy between time intervals
     def spawn_enemy(self):
-
         spawn_timer = (pygame.time.get_ticks() - self.game_start_ticks)/1000
+        increase_level_timer = int(pygame.time.get_ticks() / 1000)
 
-        if spawn_timer > 1:
-            random_loc_x = random.randint(30, self.screenWidth-30)
-            enemy = Enemy(random_loc_x, 0)
-            enemy.state = "falling"
-            self.enemies.append(enemy)
+        # if increase_level_timer % 10 == 0 and increase_level_timer > 0 and increase_level_timer > 0:
+        #     print("in")
+        #     self.spawn_speed = self.spawn_speed - 0.1
+
+        if spawn_timer > 0.1:
+            for i in range(self.spawn_enemy_total):
+                random_loc_x = random.randint(30, self.screenWidth-30)
+                enemy = Enemy(random_loc_x, 0)
+                enemy.state = "falling"
+                self.enemies.append(enemy)
             # resets the timer
             self.game_start_ticks = pygame.time.get_ticks()
 
@@ -233,6 +159,7 @@ class Game:
             enemy_collider = enemy.collider
             if self.player.collider.colliderect(enemy_collider):
                 self.reset_game()
+
             for bullet in self.bullets:
                 if bullet.collider.colliderect(enemy_collider):
                     self.bullets.remove(bullet)
@@ -243,13 +170,14 @@ class Game:
         if val != 0:
             self.game_score += val
         else:
-            self.game_score = 0
+            self.game_score = val
 
         self.score_text = self.game_font.render(
             str(self.game_score), True, (255, 255, 255), (0, 0, 0))
 
     def reset_game(self):
         self.game_score = 0
+        self.game_level = 1
         self.enemies.clear()
         self.bullets.clear()
         self.player.playerX = 370
@@ -264,10 +192,15 @@ class Game:
         pygame.display.set_caption(title)
         pygame.display.set_icon(icon)
 
-    def set_assets(self):
-        self.player = Player()
-        self.enemies = []
-        self.bullets = []
+    def increase_level(self):
+        pass
+
+    def show_fps(self):
+        self.game_clock.tick(120)
+        self.game_fps = self.game_font.render(
+            f"FPS: {math.ceil(self.game_clock.get_fps())}", True, (255, 255, 255), (0, 0, 0))
+        self.screen.blit(self.game_fps,
+                         (self.screenWidth - 90, 30))
 
 
 if __name__ == "__main__":
