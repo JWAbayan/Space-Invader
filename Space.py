@@ -198,3 +198,6 @@ class Game:
 if __name__ == "__main__":
     Space = Game(800, 600)
     Space.on_run()
+
+
+print("Hello")
