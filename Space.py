@@ -20,7 +20,7 @@ class Game:
         self.game_score = 0
         self.game_level = 1
         self.spawn_speed = 1
-        self.spawn_enemy_total = 1
+        self.spawn_enemy_total = 25
         self.game_fps = 60
 
         # Set window and assets

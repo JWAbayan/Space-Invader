@@ -45,7 +45,6 @@ class Enemy:
         self.enemyY = y
         self.velocity = random.uniform(0.1, 0.5)
         self.collider = pygame.Rect(self.enemyX, self.enemyY, 32, 32)
-        # States: ready,falling
         self.state = States.READY
 
     def move_vert(self, delta_time):
@@ -69,7 +68,6 @@ class Bullet:
         self.bulletX = x
         self.bulletY = y
         self.collider = pygame.Rect(0, 0, 8, 8)
-        # States: ready, fired
         self.state = States.READY
 
     def move_vert(self, delta_time):
