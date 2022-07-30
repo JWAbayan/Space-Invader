@@ -3,6 +3,13 @@ import random
 from enum import auto, Enum
 
 
+class Actions(Enum):
+    MOVE_LEFT = -0.4
+    MOVE_RIGHT = 0.4
+    STOP = 0
+    FIRE = auto()
+
+
 class States(Enum):
     READY = auto()
     MOVING = auto()
@@ -13,8 +20,9 @@ class Player:
         self.image = pygame.image.load("assets/player.png")
         self.playerX = 370
         self.playerY = 480
-        self.velocity_x = 0
+        self.direction = None
         self.collider = pygame.Rect(self.playerX, self.playerY, 32, 32)
+        self.state = States.READY
 
     def get_X(self):
         return self.playerX
@@ -23,16 +31,13 @@ class Player:
         return self.playerY
 
     def move_hori(self, screenWidth, delta_time):
-        new_playerX = self.playerX + self.velocity_x * delta_time
+        new_playerX = self.playerX + self.direction * delta_time
 
         # Checks if the new player x is inside the boundary
         # x > 30 and x < screenwidth - (30 + player image pixel)
         if new_playerX > 30 and new_playerX < screenWidth - 94:
             self.playerX = new_playerX
             self.collider.x = new_playerX
-
-    def move_vert(self):
-        self.playerY += self.velocity_x
 
     def in_collision(self):
         pass
